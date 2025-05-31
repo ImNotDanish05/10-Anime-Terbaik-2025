@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Anime Terbaik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .quiz-container {
+            background-color: #ffffff;
+            border-radius: 1rem; /* rounded-2xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+            padding: 2.5rem; /* p-10 */
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .btn {
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .answer-btn {
+            background-color: #e0f2fe; /* blue-50 */
+            color: #1e40af; /* blue-800 */
+            border: 2px solid #93c5fd; /* blue-300 */
+            transition: all 0.2s ease-in-out;
+            transform: scale(1);
+        }
+        .answer-btn:hover:not(.selected):not(.correct):not(.incorrect) {
+            background-color: #bfdbfe; /* blue-200 */
+            border-color: #60a5fa; /* blue-400 */
+        }
+        .answer-btn.selected {
+            background-color: #bfdbfe; /* blue-200 */
+            border-color: #60a5fa; /* blue-400 */
+        }
+        .answer-btn.correct {
+            background-color: #d1fae5; /* green-100 */
+            border-color: #34d399; /* green-400 */
+            color: #065f46; /* green-800 */
+        }
+        .answer-btn.incorrect {
+            background-color: #fee2e2; /* red-100 */
+            border-color: #f87171; /* red-400 */
+            color: #991b1b; /* red-800 */
+        }
+        .answer-btn.disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div id="welcome-screen" class="text-center">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Selamat Datang di Kuis Anime Terbaik!</h2>
+            <p class="text-gray-700 mb-8">Uji pengetahuan Anda tentang 10 anime teratas pilihan penggemar. Siap untuk tantangan?</p>
+            <button id="start-quiz-btn" class="btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg">
+                Mulai Kuis!
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div class="mb-6">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progress-bar-fill" class="bg-blue-500 h-2.5 rounded-full progress-bar-fill" style="width: 0%;"></div>
+                </div>
+                <p id="question-counter" class="text-sm text-gray-500 mt-2">Soal 1 dari 5</p>
+            </div>
+            <h3 id="question-text" class="text-2xl font-semibold text-gray-800 mb-6 leading-relaxed"></h3>
+            <div id="answer-buttons" class="grid grid-cols-1 gap-4 mb-6">
+                </div>
+            <p id="feedback-message" class="text-lg font-medium mb-4"></p>
+            <button id="next-question-btn" class="btn bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg hidden">
+                Soal Selanjutnya &rarr;
+            </button>
+        </div>
+
+        <div id="results-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Kuis Selesai!</h2>
+            <p class="text-gray-700 mb-2">Skor Anda:</p>
+            <p id="final-score" class="text-5xl font-extrabold text-blue-600 mb-8"></p>
+            <button id="restart-quiz-btn" class="btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg">
+                Main Lagi!
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Anime mana yang menduduki peringkat #1 di Anime News Network dengan rating 9.09?",
+                answers: [
+                    { text: "Fullmetal Alchemist: Brotherhood", correct: false },
+                    { text: "Frieren: Beyond Journey's End", correct: true },
+                    { text: "Steins;Gate", correct: false },
+                    { text: "Clannad After Story", correct: false }
+                ]
+            },
+            {
+                question: "Anime klasik mana yang dikenal dengan perpaduan genre sci-fi, western, noir, dan soundtrack jazz ikonik oleh Yoko Kanno?",
+                answers: [
+                    { text: "Spirited Away", correct: false },
+                    { text: "Cowboy Bebop", correct: true },
+                    { text: "Code Geass: Lelouch of the Rebellion R2", correct: false },
+                    { text: "Rurouni Kenshin: Trust & Betrayal", correct: false }
+                ]
+            },
+            {
+                question: "Film anime mana yang memenangkan Academy Award untuk Fitur Animasi Terbaik?",
+                answers: [
+                    { text: "your name.", correct: false },
+                    { text: "Spirited Away", correct: true },
+                    { text: "A Silent Voice", correct: false },
+                    { text: "Weathering With You", correct: false }
+                ]
+            },
+            {
+                question: "Anime apa yang menceritakan kisah Edward dan Alphonse Elric yang mencari Philosopher's Stone?",
+                answers: [
+                    { text: "Attack on Titan", correct: false },
+                    { text: "My Hero Academia", correct: false },
+                    { text: "Fullmetal Alchemist: Brotherhood", correct: true },
+                    { text: "Hunter x Hunter", correct: false }
+                ]
+            },
+            {
+                question: "Anime mana yang dipuji karena plot perjalanan waktu yang 'mind-blowing' dan pengembangan karakter utama Rintarou Okabe?",
+                answers: [
+                    { text: "Re:Zero - Starting Life in Another World", correct: false },
+                    { text: "Erased", correct: false },
+                    { text: "Steins;Gate", correct: true },
+                    { text: "The Girl Who Leapt Through Time", correct: false }
+                ]
+            }
+            ,
+            {
+                question: "Apakah ImNotDanish05 itu keren ?",
+                answers: [
+                    { text: "KEREN BANGEEET!!", correct: true },
+                    { text: "IYA, SUPER GANTENG!", correct: true },
+                    { text: "AKU MAU MENIKAHINYA", correct: true },
+                    { text: "Benar, keren dan skillfull", correct: true }
+                ]
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedAnswerButton = null;
+
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
+        const questionText = document.getElementById('question-text');
+        const answerButtonsContainer = document.getElementById('answer-buttons');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const nextQuestionBtn = document.getElementById('next-question-btn');
+        const questionCounter = document.getElementById('question-counter');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const finalScore = document.getElementById('final-score');
+        const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+        startQuizBtn.addEventListener('click', startQuiz);
+        nextQuestionBtn.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        });
+        restartQuizBtn.addEventListener('click', restartQuiz);
+
+        function startQuiz() {
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            currentQuestionIndex = 0;
+            score = 0;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetQuizState();
+            const question = questions[currentQuestionIndex];
+            questionText.textContent = question.question;
+            questionCounter.textContent = `Soal ${currentQuestionIndex + 1} dari ${questions.length}`;
+            updateProgressBar();
+
+            question.answers.forEach(answer => {
+                const button = document.createElement('button');
+                button.textContent = answer.text;
+                button.classList.add('answer-btn', 'w-full', 'py-3', 'px-4', 'rounded-lg', 'font-medium', 'text-lg', 'shadow-sm', 'hover:shadow-md');
+                if (answer.correct) {
+                    button.dataset.correct = true;
+                }
+                button.addEventListener('click', selectAnswer);
+                answerButtonsContainer.appendChild(button);
+            });
+        }
+
+        function resetQuizState() {
+            feedbackMessage.textContent = '';
+            nextQuestionBtn.classList.add('hidden');
+            while (answerButtonsContainer.firstChild) {
+                answerButtonsContainer.removeChild(answerButtonsContainer.firstChild);
+            }
+            selectedAnswerButton = null;
+        }
+
+        function selectAnswer(e) {
+            const selectedButton = e.target;
+            const isCorrect = selectedButton.dataset.correct === 'true';
+
+            // Disable all answer buttons after selection
+            Array.from(answerButtonsContainer.children).forEach(button => {
+                button.classList.add('disabled');
+                button.removeEventListener('click', selectAnswer);
+            });
+
+            if (isCorrect) {
+                score++;
+                feedbackMessage.textContent = 'Benar! 🎉';
+                feedbackMessage.classList.remove('text-red-600');
+                feedbackMessage.classList.add('text-green-600');
+                selectedButton.classList.add('correct');
+            } else {
+                feedbackMessage.textContent = 'Salah. 😔';
+                feedbackMessage.classList.remove('text-green-600');
+                feedbackMessage.classList.add('text-red-600');
+                selectedButton.classList.add('incorrect');
+                // Highlight correct answer if incorrect
+                Array.from(answerButtonsContainer.children).forEach(button => {
+                    if (button.dataset.correct === 'true') {
+                        button.classList.add('correct');
+                    }
+                });
+            }
+            nextQuestionBtn.classList.remove('hidden');
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressBarFill.style.width = `${progress}%`;
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            finalScore.textContent = `${score} / ${questions.length}`;
+        }
+
+        function restartQuiz() {
+            resultsScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+            currentQuestionIndex = 0;
+            score = 0;
+            progressBarFill.style.width = '0%';
+        }
+    </script>
+</body>
+</html>

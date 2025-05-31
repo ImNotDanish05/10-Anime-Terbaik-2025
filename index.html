@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor Interaktif: 10 Anime Terbaik Pilihan Penggemar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Visualization & Content Choices: 
+    1. Detail Anime (Tampilan Peringkat): Info -> Menyajikan data lengkap satu anime. Goal -> Informasi mendalam. Viz/Presentation -> Kartu info untuk statistik kunci (Rating, Suara), diikuti oleh blok teks untuk sinopsis dan alasan popularitas. Interaction -> Dipicu oleh klik pada daftar anime. Justification -> Memecah informasi menjadi bagian-bagian yang mudah dicerna.
+    2. Grafik Batang Perbandingan Rating (Tampilan Analisis): Info -> Rating dari 10 anime. Goal -> Membandingkan performa. Viz -> Grafik Batang Vertikal (Chart.js). Interaction -> Tooltip saat hover untuk menampilkan skor pasti. Justification -> Perbandingan langsung yang paling jelas dan efektif.
+    3. Grafik Sebar Rating vs. Suara (Tampilan Analisis): Info -> Rating dan jumlah suara. Goal -> Menganalisis hubungan/korelasi. Viz -> Grafik Sebar/Scatter Plot (Chart.js). Interaction -> Tooltip saat hover untuk mengidentifikasi anime dan data spesifiknya. Justification -> Ideal untuk menunjukkan hubungan antara dua variabel numerik dan mengidentifikasi pencilan.
+    4. Grafik Batang Distribusi Dekade (Tampilan Analisis): Info -> Tahun rilis anime. Goal -> Menunjukkan tren temporal (klasik vs. baru). Viz -> Grafik Batang (Chart.js) yang mengelompokkan anime per dekade. Interaction -> Tooltip saat hover. Justification -> Memberikan visualisasi yang kuat untuk wawasan laporan tentang keseimbangan antara anime lama dan baru.
+    Library/Method -> Semua grafik menggunakan Chart.js di atas elemen Canvas. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+        }
+        .nav-button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .anime-list-item.active {
+            background-color: #e0f2fe;
+            border-left-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Anime Terbaik Pilihan Penggemar</h1>
+            <p class="mt-2 text-lg text-gray-600">Sebuah Dasbor Interaktif Berdasarkan Suara Komunitas Global</p>
+            <div class="mt-4 flex flex-col sm:flex-row justify-center gap-4">
+                <a href="./quiz.html" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                    Ikuti Kuis Anime!
+                </a>
+                <a href="./download/10_Anime_Terbaik_Voting_.pdf" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                    Unduh Laporan PDF
+                </a>
+            </div>
+        </header>
+
+        <nav class="flex justify-center bg-white p-2 rounded-lg shadow-md mb-8">
+            <button id="nav-peringkat" class="nav-button active font-semibold py-2 px-4 rounded-md">Peringkat Teratas</button>
+            <button id="nav-analisis" class="nav-button font-semibold py-2 px-4 rounded-md ml-4">Analisis & Visualisasi</button>
+        </nav>
+
+        <main id="main-content">
+            <div id="peringkat-view">
+                <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <p class="text-gray-700">Selamat datang di bagian Peringkat Teratas. Di sini, Anda dapat menjelajahi setiap anime dalam daftar 10 besar secara mendetail. Cukup klik judul anime di daftar sebelah kiri untuk melihat sinopsis, statistik kunci, dan alasan mengapa anime tersebut begitu dicintai oleh para penggemar. Ini adalah cara terbaik untuk menyelami mahakarya satu per satu.</p>
+                </div>
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <aside class="w-full lg:w-1/3">
+                        <div class="bg-white p-4 rounded-lg shadow-md">
+                            <h2 class="text-xl font-bold mb-4 border-b pb-2">Daftar Peringkat</h2>
+                            <ul id="anime-list" class="space-y-2">
+                            </ul>
+                        </div>
+                    </aside>
+                    <section id="detail-section" class="w-full lg:w-2/3">
+                        <div class="bg-white p-6 rounded-lg shadow-md sticky top-8">
+                            <h2 id="detail-title" class="text-2xl md:text-3xl font-bold text-blue-600 mb-2"></h2>
+                            <p id="detail-meta" class="text-sm text-gray-500 mb-4"></p>
+                            <!-- <div class="mb-6 flex justify-center">
+                                <img id="detail-image" src="" alt="Gambar Anime" class="rounded-lg shadow-md max-w-full h-auto object-cover">
+                            </div> -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                <div class="bg-blue-50 p-4 rounded-lg">
+                                    <h3 class="font-semibold text-blue-800">Rating Penggemar (ANN)</h3>
+                                    <p id="detail-rating" class="text-2xl font-bold text-blue-900"></p>
+                                </div>
+                                <div class="bg-green-50 p-4 rounded-lg">
+                                    <h3 class="font-semibold text-green-800">Jumlah Suara</h3>
+                                    <p id="detail-votes" class="text-2xl font-bold text-green-900"></p>
+                                </div>
+                            </div>
+                            
+                            <h3 class="text-lg font-semibold border-b pb-1 mb-2">Sinopsis</h3>
+                            <p id="detail-synopsis" class="text-gray-700 mb-6 leading-relaxed"></p>
+
+                            <h3 class="text-lg font-semibold border-b pb-1 mb-2">Mengapa Dicintai Penggemar?</h3>
+                            <ul id="detail-reasons" class="list-disc list-inside space-y-2 text-gray-700">
+                            </ul>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div id="analisis-view" class="hidden">
+                 <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <p class="text-gray-700">Di bagian Analisis, kita melihat gambaran yang lebih besar. Grafik interaktif di bawah ini menyajikan data dari laporan dalam bentuk visual. Anda dapat membandingkan rating anime, melihat hubungan antara skor dan popularitas (jumlah suara), serta menemukan bagaimana daftar ini diisi oleh karya klasik dan fenomena baru. Arahkan kursor ke elemen grafik untuk melihat detailnya.</p>
+                </div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold text-center mb-4">Perbandingan Rating Anime (ANN)</h3>
+                        <div class="chart-container">
+                            <canvas id="ratingChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-bold text-center mb-4">Hubungan Rating vs. Jumlah Suara</h3>
+                        <div class="chart-container">
+                            <canvas id="scatterChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md xl:col-span-2">
+                        <h3 class="text-xl font-bold text-center mb-4">Distribusi Anime Berdasarkan Dekade Rilis</h3>
+                         <div class="chart-container">
+                            <canvas id="decadeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md xl:col-span-2">
+                        <h3 class="text-xl font-bold mb-4">Wawasan Utama dari Komunitas</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-semibold text-lg">Dominasi Narasi & Karakter Kuat</h4>
+                                <p class="text-gray-600">Anime di daftar teratas secara konsisten unggul dalam penceritaan yang kompleks dan pengembangan karakter yang mendalam, menunjukkan bahwa inti dari anime yang hebat adalah cerita yang beresonansi dengan penonton.</p>
+                            </div>
+                             <div>
+                                <h4 class="font-semibold text-lg">Keseimbangan Klasik & Fenomena Baru</h4>
+                                <p class="text-gray-600">Daftar ini mencerminkan apresiasi komunitas terhadap karya klasik yang tak lekang oleh waktu (seperti *Cowboy Bebop*) dan fenomena baru yang meroket popularitasnya (seperti *Frieren*), menunjukkan selera yang dinamis dan menghargai kualitas lintas generasi.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const animeData = [
+                { rank: 1, title: "Frieren: Beyond Journey's End", year: 2023, genre: "Adventure, Drama, Fantasy", rating: 9.09, votes: 602, synopsis: "Seorang penyihir elf abadi, Frieren, memulai perjalanan baru untuk memahami makna kehidupan dan duka setelah menyaksikan kematian teman-teman manusianya yang fana.", reasons: ["Narasi yang mendalam dan emosional tentang kehidupan & kematian.", "Visual dan atmosfer yang memukau dan melankolis.", "Meroket ke puncak peringkat sebagai seri yang relatif baru."] },
+                { rank: 2, title: "Fullmetal Alchemist: Brotherhood", year: 2009, genre: "Action, Adventure, Drama, Fantasy", rating: 9.07, votes: 6150, synopsis: "Dua bersaudara, Edward dan Alphonse Elric, mencari Philosopher's Stone untuk memulihkan tubuh mereka setelah eksperimen alkimia yang gagal secara tragis.", reasons: ["Setia pada alur cerita manga asli.", "Plot epik dengan karakter kompleks dan twist tak terduga.", "Kualitas animasi dan adegan aksi yang brilian."] },
+                { rank: 3, title: "Steins;Gate", year: 2011, genre: "Drama, Sci-Fi, Suspense", rating: 9.03, votes: 4901, synopsis: "Seorang ilmuwan eksentrik menemukan cara mengirim pesan ke masa lalu, menyeretnya ke dalam konspirasi berbahaya dan perjuangan melawan waktu.", reasons: ["Plot perjalanan waktu yang unik, kompleks, dan 'mind-blowing'.", "Pacing yang membangun ketegangan menuju akhir yang memuaskan.", "Pengembangan karakter utama yang kuat dan realistis."] },
+                { rank: 4, title: "Clannad After Story", year: 2008, genre: "Drama, Romance", rating: 9.01, votes: 5398, synopsis: "Melanjutkan kisah Tomoya dan Nagisa saat mereka menavigasi tantangan kehidupan dewasa, pernikahan, dan menjadi orang tua, dengan kejujuran yang menyayat hati.", reasons: ["Kedalaman emosional yang luar biasa dan menyentuh.", "Eksplorasi tema keluarga, kehilangan, dan pertumbuhan yang berani.", "Kualitas animasi ekspresif dari Kyoto Animation."] },
+                { rank: 5, title: "Rurouni Kenshin: Trust & Betrayal", year: 1999, genre: "Action, Historical, Drama", rating: 8.96, votes: 6715, synopsis: "Prekuel gelap yang menceritakan masa lalu Kenshin Himura sebagai pembunuh legendaris, Hitokiri Battousai, dan tragedi yang membentuknya.", reasons: ["Penceritaan yang matang, intens, dan tanpa kompromi.", "Kualitas animasi OAV yang superior untuk masanya.", "Adegan aksi yang brutal dan realistis."] },
+                { rank: 6, title: "your name.", year: 2016, genre: "Award Winning, Drama, Romance", rating: 8.93, votes: 1385, synopsis: "Seorang gadis desa dan seorang anak kota secara misterius bertukar tubuh, mengarah pada pencarian satu sama lain yang terjalin dengan takdir.", reasons: ["Visual dan animasi yang luar biasa indah dan detail.", "Soundtrack emosional oleh RADWIMPS yang ikonik.", "Cerita yang memikat dan berdampak emosional kuat."] },
+                { rank: 7, title: "Spirited Away", year: 2001, genre: "Adventure, Award Winning, Fantasy", rating: 8.92, votes: 10746, synopsis: "Seorang gadis muda, Chihiro, tersesat di dunia roh dan harus bekerja di pemandian para dewa untuk menyelamatkan orang tuanya.", reasons: ["Memenangkan Academy Award, pengakuan global yang ikonik.", "Seni dan penceritaan abadi dari Studio Ghibli.", "Musik klasik oleh Joe Hisaishi yang tak terlupakan."] },
+                { rank: 8, title: "Code Geass: Lelouch of the Rebellion R2", year: 2008, genre: "Action, Award Winning, Drama, Sci-Fi", rating: 8.91, votes: 8013, synopsis: "Lelouch melanjutkan pemberontakannya melawan Kekaisaran Britannia, menggunakan kekuatan Geass dalam pertempuran strategi dan intrik politik yang cerdas.", reasons: ["Karakter antihero, Lelouch, yang sangat karismatik dan cerdas.", "Plot penuh strategi, intrik politik, dan twist yang mengejutkan.", "Dilema moral yang kompleks dan mendalam."] },
+                { rank: 9, title: "Cowboy Bebop", year: 1998, genre: "Action, Sci-Fi, Adventure", rating: 8.89, votes: 12495, synopsis: "Mengikuti petualangan tim pemburu hadiah di luar angkasa yang berjuang bertahan hidup sambil menghadapi masa lalu mereka yang kelam.", reasons: ["Perpaduan genre unik (sci-fi, western, noir) dengan gaya yang ikonik.", "Soundtrack jazz legendaris oleh Yoko Kanno.", "Penceritaan episodik yang matang dan didorong oleh karakter."] },
+                { rank: 10, title: "Mushishi: The Next Chapter", year: 2014, genre: "Fantasy, Mystery, Slice of Life", rating: 8.86, votes: 577, synopsis: "Seorang 'Mushi Master' bernama Ginko berkeliling untuk menyelidiki fenomena supernatural yang disebabkan oleh makhluk primitif 'Mushi'.", reasons: ["Suasana yang unik, tenang, dan meditatif.", "Penceritaan episodik yang menawan dan filosofis.", "Visual indah yang menciptakan pengalaman imersif."] }
+            ];
+
+            const navPeringkat = document.getElementById('nav-peringkat');
+            const navAnalisis = document.getElementById('nav-analisis');
+            const peringkatView = document.getElementById('peringkat-view');
+            const analisisView = document.getElementById('analisis-view');
+
+            const animeList = document.getElementById('anime-list');
+            const detailTitle = document.getElementById('detail-title');
+            const detailMeta = document.getElementById('detail-meta');
+            // const detailImage = document.getElementById('detail-image'); // Removed image element
+            const detailRating = document.getElementById('detail-rating');
+            const detailVotes = document.getElementById('detail-votes');
+            const detailSynopsis = document.getElementById('detail-synopsis');
+            const detailReasons = document.getElementById('detail-reasons');
+
+            let ratingChartInstance, scatterChartInstance, decadeChartInstance;
+            let chartsCreated = false;
+
+            function switchView(view) {
+                if (view === 'analisis') {
+                    peringkatView.classList.add('hidden');
+                    analisisView.classList.remove('hidden');
+                    navPeringkat.classList.remove('active');
+                    navAnalisis.classList.add('active');
+                    if (!chartsCreated) {
+                        createCharts();
+                        chartsCreated = true;
+                    }
+                } else {
+                    analisisView.classList.add('hidden');
+                    peringkatView.classList.remove('hidden');
+                    navAnalisis.classList.remove('active');
+                    navPeringkat.classList.add('active');
+                }
+            }
+
+            navPeringkat.addEventListener('click', () => switchView('peringkat'));
+            navAnalisis.addEventListener('click', () => switchView('analisis'));
+
+            function populateAnimeList() {
+                animeData.forEach(anime => {
+                    const li = document.createElement('li');
+                    li.className = 'anime-list-item cursor-pointer p-3 rounded-lg border-l-4 border-transparent hover:bg-gray-100 transition-colors duration-200';
+                    li.dataset.rank = anime.rank;
+                    li.innerHTML = `<span class="font-bold text-blue-600 mr-2">${anime.rank}.</span> ${anime.title}`;
+                    animeList.appendChild(li);
+                });
+            }
+
+            function displayAnimeDetails(rank) {
+                const anime = animeData.find(a => a.rank === rank);
+                if (!anime) return;
+
+                detailTitle.textContent = anime.title;
+                detailMeta.textContent = `${anime.year} • ${anime.genre}`;
+                // detailImage.src = anime.imageUrl; // Removed image assignment
+                // detailImage.alt = `Gambar ${anime.title}`; // Removed image alt assignment
+                detailRating.textContent = `★ ${anime.rating.toFixed(2)}`;
+                detailVotes.textContent = anime.votes.toLocaleString('id-ID');
+                detailSynopsis.textContent = anime.synopsis;
+
+                detailReasons.innerHTML = '';
+                anime.reasons.forEach(reason => {
+                    const li = document.createElement('li');
+                    li.textContent = reason;
+                    detailReasons.appendChild(li);
+                });
+
+                document.querySelectorAll('.anime-list-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (parseInt(item.dataset.rank) === rank) {
+                        item.classList.add('active');
+                    }
+                });
+            }
+
+            animeList.addEventListener('click', (e) => {
+                const listItem = e.target.closest('.anime-list-item');
+                if (listItem) {
+                    const rank = parseInt(listItem.dataset.rank);
+                    displayAnimeDetails(rank);
+                }
+            });
+
+            function createCharts() {
+                const labels = animeData.map(a => a.title.length > 20 ? a.title.substring(0, 18) + '...' : a.title);
+                const ratings = animeData.map(a => a.rating);
+                
+                if (ratingChartInstance) ratingChartInstance.destroy();
+                ratingChartInstance = new Chart(document.getElementById('ratingChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Rating (Skala 1-10)',
+                            data: ratings,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        scales: {
+                            x: { beginAtZero: false, min: 8.5 }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+
+                const scatterData = animeData.map(a => ({ x: a.votes, y: a.rating, title: a.title }));
+                if (scatterChartInstance) scatterChartInstance.destroy();
+                scatterChartInstance = new Chart(document.getElementById('scatterChart'), {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Anime',
+                            data: scatterData,
+                            backgroundColor: 'rgba(239, 68, 68, 0.7)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { type: 'logarithmic', title: { display: true, text: 'Jumlah Suara (Skala Log)' } },
+                            y: { title: { display: true, text: 'Rating' } }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const point = context.raw;
+                                        return `${point.title}: (Suara: ${point.x.toLocaleString('id-ID')}, Rating: ${point.y})`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                const decades = { 'Pra-2000': 0, '2000-an': 0, '2010-an': 0, '2020-an': 0 };
+                animeData.forEach(a => {
+                    if (a.year < 2000) decades['Pra-2000']++;
+                    else if (a.year < 2010) decades['2000-an']++;
+                    else if (a.year < 2020) decades['2010-an']++;
+                    else decades['2020-an']++;
+                });
+
+                if(decadeChartInstance) decadeChartInstance.destroy();
+                decadeChartInstance = new Chart(document.getElementById('decadeChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(decades),
+                        datasets: [{
+                            label: 'Jumlah Anime',
+                            data: Object.values(decades),
+                            backgroundColor: [
+                                'rgba(255, 159, 64, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(153, 102, 255, 0.7)',
+                                'rgba(255, 99, 132, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 159, 64, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)',
+                                'rgba(255, 99, 132, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            populateAnimeList();
+            displayAnimeDetails(1);
+        });
+    </script>
+</body>
+</html>
